@@ -170,7 +170,8 @@ type coords = {
       return;
     }
 
-    const sensitivity = document.getElementById("sensitivity")!.value;
+    const sensitivityInput :HTMLInputElement = document.getElementById("sensitivity") as HTMLInputElement;
+    const sensitivity: number = parseInt(sensitivityInput.value);
 
     const xSpeed = (heldX!-x!);
     const ySpeed = (heldY!-y!);

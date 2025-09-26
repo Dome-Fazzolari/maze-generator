@@ -1,4 +1,4 @@
-import { Graphics, GraphicsContext, type StrokeInput } from "pixi.js";
+import { Graphics, type StrokeInput } from "pixi.js";
 import { Node } from "./node";
 
 export type tags = "start"|"end"|null;
@@ -18,16 +18,6 @@ export class SquareNode{
         this.square_size = square_size;
         this.coords = coords;
         this.tag = tag;
-    }
-
-
-    private getRandomColor():String {
-        var letters = '0123456789ABCDEF';
-        var color = '#';
-        for (var i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
     }
     
     public render_node():Graphics{
