@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + TS</title>
+  </head>
+  <body>
+
+    <div id="pixiCanvas"></div>
+    <div id="action-cards">
+      <div id="controls">
+        <button type="button" id="zoom-in-btn">+</button>
+        <button type="button" id="zoom-out-btn">-</button>
+        <button type="button" id="start-a-star">A*</button>
+        <label for="sensitivity">Sensibilità</label>
+        <input type="range" name="sensitivity" id="sensitivity" min="1" max="100" step="2">
+      </div>
+      
+      <div id="content"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
