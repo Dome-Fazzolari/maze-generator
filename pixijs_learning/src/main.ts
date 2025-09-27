@@ -23,6 +23,12 @@ type coords = {
   const squareSize = 40;
   const mosaicWidth = 20;
   const mosaicHeight = 20;
+  let startSelectionInProgress = false;
+  let endSelectionInProgress = false;
+  const selectEndButton = document.getElementById("select-end") as HTMLButtonElement;
+  const selectStartButton = document.getElementById("select-start") as HTMLButtonElement;
+
+  let lastTemporarySelected: SquareNode | null = null;
 
   const start: coords = {
     x: 0,
@@ -35,8 +41,8 @@ type coords = {
   }
 
   let nodeList: Node[][] = [];
-  let destinationNode: Node|null;
-  let startNode: Node|null;
+  let destinationNode: SquareNode|null;
+  let startNode: SquareNode|null;
 
   for(let i =0; i < mosaicWidth; i++){
     let row: Node[] = [];
@@ -49,7 +55,6 @@ type coords = {
 
   buildMaze(nodeList, 0, 0, []);
 
-
   for(let i =0; i < mosaicWidth; i++){
     for(let j = 0; j< mosaicHeight; j++){
       let node = nodeList[i][j];
@@ -61,10 +66,8 @@ type coords = {
       
       if(isGoal){
         tag = "end";
-        destinationNode = node;
       }
       if(isStart){
-        startNode = node;
         tag = "start";
       }
       
@@ -80,7 +83,74 @@ type coords = {
       );
 
 
+      if(isGoal){
+        destinationNode = square;
+      }
+      if(isStart){
+        startNode = square;
+      }
+
       const obj = square.render_node();
+      obj.eventMode = "static";
+
+      obj.addEventListener("mouseover", ()=>{
+        if(startSelectionInProgress){
+          if(square == startNode) return;
+          lastTemporarySelected = square;
+          if(square.tag == null){
+            square.tag = "start";
+            square.render_node();
+          }
+        }else if(endSelectionInProgress){
+          if(square == destinationNode) return;
+          lastTemporarySelected = square;
+          if(square.tag == null){
+            square.tag = "end";
+            square.render_node();
+          }
+        }
+        
+      });
+
+      obj.addEventListener("mousedown", ()=>{
+        if(startSelectionInProgress){
+          startNode!.tag = null;
+          startNode!.render_node();      
+          startNode = square;    
+          square.tag = "start";
+          square.render_node();
+          startSelectionInProgress = false;
+          lastTemporarySelected = null;
+          checkStartSelectButtonStatus();
+        }else if(endSelectionInProgress){
+          destinationNode!.tag = null;
+          destinationNode!.render_node();
+          destinationNode = square;
+          square.tag = "end";
+          square.render_node();
+          endSelectionInProgress = false;
+          lastTemporarySelected = null;
+          checkEndSelectButtonStatus();
+        }
+      })
+
+      obj.on("mouseleave", ()=>{
+        if(startSelectionInProgress){
+          if(square.node == startNode!.node) return;
+
+          if(square.tag == "start"){
+            square.tag = null;
+            square.render_node();
+          }
+        }else if(endSelectionInProgress){
+          if(square.node == destinationNode!.node) return;
+
+          if(square.tag == "end"){
+            square.tag = null;
+            square.render_node();
+          }
+        }
+      })
 
       container.addChild(obj); 
     }
@@ -123,6 +193,44 @@ type coords = {
     held = false;
   });
 
+
+  selectStartButton.addEventListener("click", (_)=>{
+    startSelectionInProgress = !startSelectionInProgress;
+    checkStartSelectButtonStatus();
+  });
+
+  function checkStartSelectButtonStatus(){
+    if(startSelectionInProgress){
+      selectStartButton.innerHTML = "Cancella selezione";
+    }else{
+      if (lastTemporarySelected != null){
+        lastTemporarySelected.tag = null;
+        lastTemporarySelected.render_node();
+        lastTemporarySelected = null;
+      }
+      selectStartButton.innerHTML = "Seleziona inizio";
+    }
+  }
+
+
+  selectEndButton.addEventListener("click", (_)=>{
+    endSelectionInProgress = !endSelectionInProgress;
+    checkEndSelectButtonStatus();
+  });
+
+  function checkEndSelectButtonStatus(){
+    if(endSelectionInProgress){
+      selectEndButton.innerHTML = "Cancella selezione";
+    }else{
+      if (lastTemporarySelected != null){
+        lastTemporarySelected.tag = null;
+        lastTemporarySelected.render_node();
+        lastTemporarySelected = null;
+      }
+      selectEndButton.innerHTML = "Seleziona fine";
+    }
+  }
+
   document.getElementById("zoom-in-btn")?.addEventListener("click", (_)=>{
       zoomIn(container);
   });
@@ -133,7 +241,9 @@ type coords = {
   let newLine = new Graphics();
   document.getElementById("start-a-star")?.addEventListener("click", (_)=>{
 
-      const aStarPath: coords[]|null = aStar(destinationNode!, startNode!);
+        console.log(nodeList);
+        
+      const aStarPath: coords[]|null = aStar(destinationNode!.node, startNode!.node);
       if(aStarPath == null){
         alert("Percorso non trovato");
         return;
@@ -144,14 +254,14 @@ type coords = {
       aStarPath.forEach((element, index) => {
         if(index != 0){
           //newLine.circle(element.x*squareSize+(squareSize/2), element.y*squareSize+(squareSize/2), 5).fill({color: 0x000000})
-          newLine.lineTo(element.x*squareSize+(squareSize/2), element.y*squareSize+(squareSize/2))
+          newLine.lineTo(element.x*squareSize+(squareSize/2)+window.screen.width * 0.25, element.y*squareSize+(squareSize/2)+window.screen.height * 0.05)
           .stroke({
             width: 2,
             color: "red",
             pixelLine: true
           });
         }else{
-          newLine.moveTo(startNode!.x*squareSize+(squareSize/2), startNode!.y*squareSize+(squareSize/2));
+          newLine.moveTo(startNode!.node.x*squareSize+(squareSize/2) + window.screen.width * 0.25 , startNode!.node.y*squareSize+(squareSize/2) +window.screen.height * 0.05);
         }
       });
 
@@ -201,6 +311,7 @@ function zoomOut(container: Container){
 }
 
 
+
 function aStar(destinationNode: Node, startNode: Node): coords[]|null{
   let openList: Node[] = [startNode];
   let closedList: Node[] = [];
@@ -217,14 +328,15 @@ function aStar(destinationNode: Node, startNode: Node): coords[]|null{
       openList.push(node);
   }
 
-  function reverseTraverse(node: Node){
+  function reverseTraverse(node: Node, startLocation:Node){
     let coordList: coords[] = [];
-    while(node.parent != null){
+    while(node != startLocation){
       coordList.push({
         x: node.x,
         y: node.y
       });
-      node = node.parent;
+      if(node == null) break;
+        node = node.parent!;
     }
 
     coordList.push(node);
@@ -232,15 +344,15 @@ function aStar(destinationNode: Node, startNode: Node): coords[]|null{
     return coordList.reverse();
   }
   
-  while(openList.length > 0){
   
+  while(openList.length > 0){
     current = openList.sort((a, b)=>(a.f_cost ?? 9999999999) > (b.f_cost ?? 9999999999)? 1: 0)[0];
 
     openList.splice(openList.indexOf(current), 1);
     closedList.push(current);
 
     if(current == destinationNode){
-      return reverseTraverse(current);
+      return reverseTraverse(current, startNode);
     }
 
     current.neighbours?.forEach((node)=>{
@@ -254,7 +366,6 @@ function aStar(destinationNode: Node, startNode: Node): coords[]|null{
         node.f_cost = new_f_cost;
         node.parent = current;
         addToOpen(node);
-        return;
       }
     });
   }
@@ -315,6 +426,7 @@ function buildMaze(nodeList: Node[][], i:number, j: number, usedNodes: Node[]):v
         node.bottom_node = below_node;
         below_node!.top_node = node;
         node.addNeighbour(below_node!);
+        below_node?.addNeighbour(node);
         indexes = {
           i: i,
           j: j+1
@@ -324,6 +436,7 @@ function buildMaze(nodeList: Node[][], i:number, j: number, usedNodes: Node[]):v
         node.left_node = left_node;
         left_node!.right_node = node;
         node.addNeighbour(left_node!);
+        left_node?.addNeighbour(node);
         indexes = {
           i: i-1,
           j: j
@@ -333,6 +446,7 @@ function buildMaze(nodeList: Node[][], i:number, j: number, usedNodes: Node[]):v
         node.right_node = right_node;
         right_node!.left_node = node;
         node.addNeighbour(right_node!);
+        right_node?.addNeighbour(node);
         indexes = {
           i: i+1,
           j: j
@@ -342,6 +456,7 @@ function buildMaze(nodeList: Node[][], i:number, j: number, usedNodes: Node[]):v
         node.top_node = above_node;
         above_node!.bottom_node = node;
         node.addNeighbour(above_node!);
+        above_node?.addNeighbour(node);
         indexes = {
           i: i,
           j: j-1
