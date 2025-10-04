@@ -1,11 +1,17 @@
 import './style.css'
-import { Application, Container, Graphics } from 'pixi.js'
+import { Assets, Application, Container, Point } from 'pixi.js'
 import { Node } from './node';
 import { SquareNode, type tags } from './square_node';
+import { PathTrail } from './path_trail';
 
-type coords = {
+export type coords = {
   x: number,
   y: number
+};
+
+const mainContainerPadding: {left: number, top:number} = {
+  left: Math.ceil(window.screen.width * 0.25),
+  top: Math.ceil(window.screen.height * 0.05)
 };
 
 (async()=>{
@@ -15,14 +21,16 @@ type coords = {
 
   document.getElementById("pixiCanvas")!.appendChild(app.canvas);
 
+  // Trail texture retrieve
+  const trailTexture = await Assets.load('https://pixijs.com/assets/trail.png');
 
   const container = new Container({
     isRenderGroup: true
   });
 
   const squareSize = 40;
-  const mosaicWidth = 20;
-  const mosaicHeight = 20;
+  const mosaicWidth = 40;
+  const mosaicHeight = 40;
   let startSelectionInProgress = false;
   let endSelectionInProgress = false;
   const selectEndButton = document.getElementById("select-end") as HTMLButtonElement;
@@ -76,8 +84,8 @@ type coords = {
           node,
           squareSize,
           {
-            x: i*squareSize + window.screen.width * 0.25,
-            y: j*squareSize + window.screen.height * 0.05
+            x: i*squareSize + mainContainerPadding.left,
+            y: j*squareSize + mainContainerPadding.top
           },
           tag
       );
@@ -238,10 +246,10 @@ type coords = {
       zoomOut(container);
   });
 
-  let newLine = new Graphics();
+
   document.getElementById("start-a-star")?.addEventListener("click", (_)=>{
 
-        console.log(nodeList);
+      console.log(nodeList);
         
       const aStarPath: coords[]|null = aStar(destinationNode!.node, startNode!.node);
       if(aStarPath == null){
@@ -249,28 +257,20 @@ type coords = {
         return;
       }
 
-      newLine.clear();
+      let trail:coords[] = [];
+      aStarPath.forEach((element)=>{
+        trail.push(
+          {x:element.x*squareSize+(squareSize/2)+mainContainerPadding.left, y:element.y*squareSize+(squareSize/2)+mainContainerPadding.top}
+        )
+      })
 
-      aStarPath.forEach((element, index) => {
-        if(index != 0){
-          //newLine.circle(element.x*squareSize+(squareSize/2), element.y*squareSize+(squareSize/2), 5).fill({color: 0x000000})
-          newLine.lineTo(element.x*squareSize+(squareSize/2)+window.screen.width * 0.25, element.y*squareSize+(squareSize/2)+window.screen.height * 0.05)
-          .stroke({
-            width: 2,
-            color: "red",
-            pixelLine: true
-          });
-        }else{
-          newLine.moveTo(startNode!.node.x*squareSize+(squareSize/2) + window.screen.width * 0.25 , startNode!.node.y*squareSize+(squareSize/2) +window.screen.height * 0.05);
-        }
-      });
+      const testTrail = new PathTrail(
+        container,
+        50,
+        trailTexture
+      );
 
-      newLine = newLine.stroke({
-            width:7,
-            color: 0x000000,
-            pixelLine: false
-          });
-      container.addChild(newLine);
+      testTrail.beginAnimation(trail);
   });
 
   app.ticker.add((t)=>{
@@ -293,8 +293,8 @@ type coords = {
 
     x = heldX;
     y = heldY;
-    
   });
+
 
   app.stage.addChild(container); 
 })();

@@ -4,9 +4,6 @@ import { Node } from "./node";
 export type tags = "start"|"end"|null;
 
 export class SquareNode{
-
-    
-
     node: Node;
     square: Graphics;
     square_size: number;
@@ -78,9 +75,7 @@ export class SquareNode{
             case "end":
                 return "blue";
             default:
-                return "white";
+                return "orange";
         }
     }
-    
-
 }

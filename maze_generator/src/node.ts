@@ -1,5 +1,4 @@
 export class Node{
-
     x: number;
     y: number;
     f_cost: number|null = null;
