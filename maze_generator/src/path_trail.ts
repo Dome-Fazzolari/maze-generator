@@ -2,6 +2,11 @@ import { Container, MeshRope, Point, Texture, Ticker } from "pixi.js";
 import type { coords } from "./main";
 
 export class PathTrail{
+    // this 2 variable are just so the compiler shuts up due to to the context passed in the ticker, do not use them
+    private lastCoord: coords = {x:0, y:0};
+    private nextCoord: coords = {x:0, y:0}
+
+
     private mesh: MeshRope;
     private historyX: number[];
     private historyY: number[];

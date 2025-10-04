@@ -1,5 +1,5 @@
 import './style.css'
-import { Assets, Application, Container, Point } from 'pixi.js'
+import { Assets, Application, Container } from 'pixi.js'
 import { Node } from './node';
 import { SquareNode, type tags } from './square_node';
 import { PathTrail } from './path_trail';
